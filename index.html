@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>时间主权</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F5F0EB;--card-bg:#FFFCF7;--text:#2D2D2D;--text2:#7A7A7A;
+  --accent:#7C9E8A;--accent-dark:#5A7D68;--accent-light:#D4E5DA;
+  --warm:#D4956B;--warm-light:#F5E6D8;--border:#E5DDD5;
+  --radius:12px;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  --early:#C9A84C;--early-light:#FFF3D6
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
+.app{max-width:420px;margin:0 auto;padding:0 16px}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:10;background:rgba(245,240,235,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:12px 0 0}
+.nav-inner{display:flex;gap:0;background:#E8E0D8;border-radius:10px;padding:3px}
+.nav-tab{flex:1;padding:8px 0;border:none;background:none;border-radius:8px;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .25s}
+.nav-tab.active{background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+
+/* Date Bar */
+.date-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:20px 0 8px}
+.date-text{font-size:16px;font-weight:500;min-width:140px;text-align:center}
+.date-btn{width:36px;height:36px;border:none;background:var(--accent-light);border-radius:50%;font-size:18px;color:var(--accent-dark);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.date-btn:active{transform:scale(0.9)}
+.date-today{font-size:11px;color:var(--accent);text-align:center;padding-bottom:4px}
+
+/* Form */
+.form-section{margin-bottom:20px}
+.section-label{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px;letter-spacing:0.5px}
+.input,.textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;background:#fff;color:var(--text);outline:none;transition:border-color .2s;font-family:inherit}
+.input:focus,.textarea:focus{border-color:var(--accent)}
+.textarea{resize:vertical;min-height:60px;line-height:1.5}
+
+/* Bedtime */
+.bedtime-row{display:flex;align-items:center;gap:10px}
+.bedtime-input{width:100px;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;background:#fff;color:var(--text);outline:none;transition:border-color .2s;font-family:inherit;text-align:center}
+.bedtime-input:focus{border-color:var(--accent)}
+.early-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;transition:all .3s}
+.early-badge.early{background:var(--early-light);color:var(--early);font-weight:700}
+.early-badge.late{background:#f8e8e8;color:#d45454;font-weight:700}
+.early-badge.none{background:transparent;color:transparent}
+.bedtime-tip{font-size:11px;color:var(--text2);margin-top:4px}
+
+/* Done Items */
+.done-item{margin-bottom:12px;padding:10px;background:#fff;border-radius:8px;border:1px solid var(--border)}
+.done-item-row{display:flex;gap:8px;align-items:center}
+.done-input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:6px;font-size:15px;background:transparent;color:var(--text);outline:none;transition:border-color .2s;font-family:inherit}
+.done-input:focus{border-color:var(--accent)}
+.remove-btn{width:28px;height:28px;border:none;background:#f0e8e0;border-radius:50%;font-size:16px;color:#c0a898;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.remove-btn:active{background:#e8d8cc;transform:scale(0.9)}
+.done-note-row{display:flex;gap:8px;align-items:center;margin-top:6px}
+.done-note-input{flex:1;padding:6px 10px;border:1px solid #e8e0d8;border-radius:6px;font-size:13px;background:rgba(124,158,138,0.04);color:var(--text2);outline:none;font-family:inherit}
+.done-note-input:focus{border-color:var(--accent)}
+.photo-btn{width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.photo-btn:active{background:var(--accent-light)}
+.photo-btn.has-photo{background:var(--accent-light);border-color:var(--accent)}
+.done-photo-preview{margin-top:6px;max-width:100%}
+.done-photo-thumb{width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
+.photo-note{font-size:10px;color:var(--text2);margin-top:2px}
+.add-btn{border:none;background:none;color:var(--accent);font-size:14px;cursor:pointer;padding:6px 0;font-weight:500}
+.add-btn:active{opacity:0.7}
+
+/* Anchor */
+.anchor-input{width:100%;padding:12px 14px;border:1.5px solid var(--accent-light);border-radius:8px;font-size:15px;background:rgba(124,158,138,0.04);color:var(--text);outline:none;transition:border-color .2s;font-family:inherit;border-left:3px solid var(--accent)}
+.anchor-input:focus{border-color:var(--accent)}
+.anchor-life{border-left-color:var(--warm);background:rgba(212,149,107,0.04)}
+.anchor-life:focus{border-color:var(--warm)}
+.anchor-work{border-left-color:var(--accent)}
+.anchor-work:focus{border-color:var(--accent)}
+.mood-desc{margin-top:6px;min-height:40px;font-size:14px;border-color:var(--border);background:rgba(255,255,255,0.6)}
+.mood-desc:focus{border-color:var(--accent)}
+
+/* Time */
+.collapse-btn{width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 0;border:none;background:none;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;letter-spacing:0.5px}
+.collapse-btn .arrow{font-size:12px;transition:transform .25s}
+.collapsed{max-height:0;overflow:hidden;transition:max-height .3s}
+.expanded{max-height:300px}
+.time-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.time-label{font-size:13px;color:var(--text2);width:64px;flex-shrink:0}
+.time-btn{width:32px;height:32px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:16px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.time-btn:active{background:var(--accent-light);border-color:var(--accent)}
+.time-val{font-size:14px;font-weight:500;min-width:32px;text-align:center}
+
+/* Mood */
+.mood-row{display:flex;gap:8px;flex-wrap:wrap}
+.mood-btn{width:48px;height:48px;border:2px solid var(--border);border-radius:12px;font-size:24px;background:#fff;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.mood-btn.active{border-color:var(--accent);background:var(--accent-light);transform:scale(1.08)}
+.mood-btn:active{transform:scale(0.95)}
+.mood-text{font-size:13px;color:var(--text2);margin-top:6px;min-height:20px}
+
+/* Buttons */
+.primary-btn{width:100%;padding:14px;border:none;background:var(--accent);color:#fff;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px}
+.primary-btn:active{background:var(--accent-dark);transform:scale(0.98)}
+.secondary-btn{width:100%;padding:12px;border:1.5px solid var(--border);background:#fff;color:var(--text);border-radius:10px;font-size:14px;cursor:pointer;margin-top:8px}
+.secondary-btn:active{background:var(--bg)}
+.sync-section{display:flex;gap:8px;margin-top:12px}
+.sync-section .secondary-btn{flex:1;margin-top:0;font-size:13px;padding:10px}
+
+/* Card Preview */
+.view{display:none}
+.view.active{display:block}
+.card-wrapper{display:flex;justify-content:center;padding:16px 0}
+.tip{font-size:12px;color:var(--text2);text-align:center;margin:8px 0}
+.saved-tip{text-align:center;padding:8px;color:var(--accent);font-size:13px;font-weight:500}
+
+/* ===== CARD STYLES ===== */
+.card{width:100%;max-width:360px;aspect-ratio:auto;min-height:480px;background:linear-gradient(170deg,#FFFCF7 0%,#FFF6ED 50%,#F5EDE5 100%);border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;position:relative;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm))}
+.card-brand{font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:12px}
+.card-date-row{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.card-date-main{font-size:42px;font-weight:300;color:var(--text);line-height:1;font-family:Georgia,"Noto Serif SC","Songti SC",serif;letter-spacing:-1px}
+.card-weekday{font-size:13px;color:var(--accent);font-weight:500;margin-top:4px}
+.card-bedtime-badge{font-size:12px;padding:3px 8px;border-radius:5px;display:inline-flex;align-items:center;gap:3px}
+.card-bedtime-badge.early{background:var(--early-light);color:var(--early)}
+.card-bedtime-badge.late{background:#f8e8e8;color:#d45454}
+.card-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0}
+.card-section-title{font-size:11px;font-weight:600;color:var(--accent-dark);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+.card-done-section{margin-bottom:4px}
+.card-done-item{padding:4px 0 2px;font-size:14px;color:var(--text);line-height:1.4}
+.card-done-text{display:flex;align-items:center;gap:6px}
+.card-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;display:inline-block}
+.card-done-note{font-size:12px;color:var(--text2);padding:2px 0 2px 14px;font-style:italic;line-height:1.3}
+.card-anchor-section{margin-top:10px}
+.card-anchor{font-size:15px;color:var(--text);padding:8px 12px;border-left:3px solid var(--accent);background:rgba(124,158,138,0.05);border-radius:0 6px 6px 0;line-height:1.4}
+.card-anchor-life{border-left-color:var(--warm);background:rgba(212,149,107,0.05)}
+.card-anchor-work{border-left-color:var(--accent);background:rgba(124,158,138,0.05)}
+.card-mood-desc{font-size:13px;color:var(--text2);line-height:1.5;padding:6px 0;margin-top:4px;font-style:italic;border-top:1px dashed var(--border)}
+.card-photo-section{margin-top:12px}
+.card-photo-grid{display:flex;gap:6px;flex-wrap:wrap}
+.card-photo-thumb{width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+.card-time-section{margin-top:auto}
+.card-time-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.card-time-label{font-size:11px;color:var(--text2);width:52px;flex-shrink:0}
+.card-time-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.card-time-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .5s}
+.card-time-val{font-size:11px;color:var(--text2);width:24px;text-align:right}
+.card-mood{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding-top:8px}
+.card-mood-emoji{font-size:16px}
+.card-mood-text{font-size:12px;color:var(--text2)}
+
+/* Weekly Card extras */
+.card-stats{display:flex;gap:16px;margin-bottom:8px}
+.card-stat{flex:1;text-align:center;padding:10px 0;background:rgba(124,158,138,0.06);border-radius:8px}
+.card-stat .num{font-size:28px;font-weight:300;color:var(--accent-dark);font-family:Georgia,serif}
+.card-stat .lbl{font-size:11px;color:var(--text2);margin-top:2px}
+.card-text-block{font-size:13px;color:var(--text);line-height:1.6;padding:4px 0}
+.card-week-highlights{background:rgba(124,158,138,0.05);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.card-week-improve{background:rgba(212,149,107,0.08);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+
+/* Week Stats */
+.week-header{text-align:center;padding:16px 0}
+.week-label{font-size:16px;font-weight:500;color:var(--text)}
+.week-stats{display:flex;gap:12px;margin-bottom:20px}
+.stat-card{flex:1;text-align:center;padding:14px 0;background:#fff;border-radius:10px;box-shadow:var(--shadow)}
+.stat-num{font-size:24px;font-weight:600;color:var(--accent-dark)}
+.stat-label{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* Week entry list */
+.week-entries{margin-bottom:20px}
+.week-entry-day{padding:8px 0;border-bottom:1px solid var(--border)}
+.week-entry-date{font-size:12px;color:var(--text2);margin-bottom:4px}
+.week-entry-items{font-size:13px;color:var(--text);line-height:1.5}
+.week-entry-anchor{font-size:12px;color:var(--accent-dark);margin-top:2px}
+.week-entry-mood{font-size:16px}
+.week-entry-bedtime{font-size:11px;color:var(--text2)}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease-out}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <button class="nav-tab active" data-tab="daily">每日</button>
+      <button class="nav-tab" data-tab="weekly">周复盘</button>
+    </div>
+  </nav>
+
+  <!-- ===== DAILY VIEW ===== -->
+  <div id="dailyView" class="view active">
+    <div class="date-bar">
+      <button class="date-btn" id="prevDay">‹</button>
+      <span class="date-text" id="dateText"></span>
+      <button class="date-btn" id="nextDay">›</button>
+    </div>
+    <div class="date-today" id="todayHint"></div>
+
+    <div class="form">
+      <!-- Bedtime -->
+      <div class="form-section">
+        <div class="section-label">🌙 入睡时间 · 早睡打卡</div>
+        <div class="bedtime-row">
+          <input type="time" id="bedtimeInput" class="bedtime-input" value="">
+          <span class="early-badge none" id="earlyBadge"></span>
+        </div>
+        <div class="bedtime-tip">23:30前睡 = ⭐ 早睡达标</div>
+      </div>
+
+      <!-- Done -->
+      <div class="form-section">
+        <div class="section-label">✓ Done</div>
+        <div id="doneContainer"></div>
+        <button class="add-btn" id="addDoneBtn">+ 添加</button>
+      </div>
+
+      <!-- Anchors -->
+      <div class="form-section">
+        <div class="section-label">→ 明天锚点</div>
+        <input type="text" id="anchorLifeInput" class="anchor-input anchor-life" placeholder="🌱 生活锚点（如：散步30分钟）">
+        <input type="text" id="anchorWorkInput" class="anchor-input anchor-work" placeholder="→ 正事锚点（如：投3家简历）" style="margin-top:8px">
+      </div>
+
+      <!-- Time (collapsible) -->
+      <div class="form-section">
+        <button class="collapse-btn" id="timeToggle">
+          <span>⏱ 时间分配</span>
+          <span class="arrow">▾</span>
+        </button>
+        <div id="timeContainer" class="collapsed">
+          <div class="time-row">
+            <span class="time-label">睡眠</span>
+            <button class="time-btn" data-cat="sleep" data-dir="-1">−</button>
+            <span class="time-val" id="time_sleep">0h</span>
+            <button class="time-btn" data-cat="sleep" data-dir="1">+</button>
+          </div>
+          <div class="time-row">
+            <span class="time-label">手机/娱乐</span>
+            <button class="time-btn" data-cat="phone" data-dir="-1">−</button>
+            <span class="time-val" id="time_phone">0h</span>
+            <button class="time-btn" data-cat="phone" data-dir="1">+</button>
+          </div>
+          <div class="time-row">
+            <span class="time-label">产出</span>
+            <button class="time-btn" data-cat="productive" data-dir="-1">−</button>
+            <span class="time-val" id="time_productive">0h</span>
+            <button class="time-btn" data-cat="productive" data-dir="1">+</button>
+          </div>
+          <div class="time-row">
+            <span class="time-label">生活</span>
+            <button class="time-btn" data-cat="life" data-dir="-1">−</button>
+            <span class="time-val" id="time_life">0h</span>
+            <button class="time-btn" data-cat="life" data-dir="1">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mood -->
+      <div class="form-section">
+        <div class="section-label">心情</div>
+        <div class="mood-row" id="moodRow">
+          <button class="mood-btn" data-mood="😊" data-label="不错的一天">😊</button>
+          <button class="mood-btn" data-mood="😐" data-label="平平淡淡">😐</button>
+          <button class="mood-btn" data-mood="😔" data-label="有点难">😔</button>
+          <button class="mood-btn" data-mood="💪" data-label="有在努力">💪</button>
+          <button class="mood-btn" data-mood="😴" data-label="摆烂但坦荡">😴</button>
+        </div>
+        <div class="mood-text" id="moodText"></div>
+        <textarea id="moodDesc" class="textarea mood-desc" placeholder="想写点什么感想…（也可以不写）" rows="2"></textarea>
+      </div>
+
+      <button class="primary-btn" id="generateBtn">保存 & 生成卡片</button>
+      <div class="sync-section">
+        <button class="secondary-btn" id="exportBtn">📤 导出数据</button>
+        <button class="secondary-btn" id="importBtn">📥 导入数据</button>
+        <input type="file" id="importFile" accept=".json" style="display:none">
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DAILY CARD PREVIEW ===== -->
+  <div id="previewView" class="view">
+    <div class="saved-tip" id="savedTip"></div>
+    <div class="card-wrapper">
+      <div id="cardContent" class="card fade-in"></div>
+    </div>
+    <p class="tip">📱 截图保存卡片，发到小红书</p>
+    <button class="secondary-btn" id="backBtn">返回编辑</button>
+  </div>
+
+  <!-- ===== WEEKLY VIEW ===== -->
+  <div id="weeklyView" class="view">
+    <div class="week-header">
+      <div class="week-label" id="weekLabel"></div>
+    </div>
+    <div class="week-stats" id="weekStats"></div>
+    <div class="week-entries" id="weekEntries"></div>
+
+    <div class="form">
+      <div class="form-section">
+        <div class="section-label">✦ 本周高光</div>
+        <textarea id="weekHighlights" class="textarea" rows="3" placeholder="这周做得好的事…"></textarea>
+      </div>
+      <div class="form-section">
+        <div class="section-label">↻ 需要改善</div>
+        <textarea id="weekImprove" class="textarea" rows="3" placeholder="下周想改善什么…"></textarea>
+      </div>
+      <div class="form-section">
+        <div class="section-label">→ 下周锚点</div>
+        <input type="text" id="weekAnchor" class="anchor-input" placeholder="下周最想做到的一件事">
+      </div>
+      <button class="primary-btn" id="generateWeeklyBtn">生成周复盘卡片</button>
+    </div>
+  </div>
+
+  <!-- ===== WEEKLY CARD PREVIEW ===== -->
+  <div id="weeklyPreviewView" class="view">
+    <div class="card-wrapper">
+      <div id="weeklyCardContent" class="card fade-in"></div>
+    </div>
+    <p class="tip">📱 截图保存卡片，发到小红书</p>
+    <button class="secondary-btn" id="weeklyBackBtn">返回编辑</button>
+  </div>
+</div>
+
+<script>
+// ===== Constants =====
+const STORAGE_KEY = 'time-sovereignty';
+const WEEKDAYS = ['周日','周一','周二','周三','周四','周五','周六'];
+const MOODS = {'😊':'不错的一天','😐':'平平淡淡','😔':'有点难','💪':'有在努力','😴':'摆烂但坦荡'};
+const TIME_CATS = ['sleep','phone','productive','life'];
+const TIME_LABELS = {sleep:'睡眠',phone:'手机',productive:'产出',life:'生活'};
+const EARLY_THRESHOLD = '23:30'; // 早睡达标线
+
+// ===== State =====
+let currentDate = new Date();
+let selectedMood = null;
+let timeData = {sleep:0,phone:0,productive:0,life:0};
+let currentPhotos = {}; // itemId -> base64, temporary (not persisted)
+
+// ===== Utilities =====
+function dateKey(d){ return d.toISOString().split('T')[0]; }
+function formatDate(d){
+  return (d.getMonth()+1)+'月'+d.getDate()+'日 '+WEEKDAYS[d.getDay()];
+}
+function loadData(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||{days:{},weeks:{}}; }
+  catch(e){ return {days:{},weeks:{}}; }
+}
+function saveAll(data){ localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }
+function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function formatBedtime(val){
+  if(!val) return '';
+  // val is HH:MM format from time input
+  const parts = val.split(':');
+  let h = parseInt(parts[0]), m = parts[1];
+  if(h>=12) return h+':'+m;
+  return h+':'+m;
+}
+function isEarlySleep(val){
+  if(!val) return false;
+  const parts = val.split(':');
+  const h = parseInt(parts[0]), m = parseInt(parts[1]);
+  // 凌晨0-5点=晚睡（过了23:30），不是早睡
+  if(h < 6) return false;
+  // 正常晚间时间：23:30之前=早睡达标
+  const totalMin = h * 60 + m;
+  return totalMin <= 23 * 60 + 30;
+}
+function updateEarlyBadge(){
+  const val = document.getElementById('bedtimeInput').value;
+  const badge = document.getElementById('earlyBadge');
+  if(!val){
+    badge.className = 'early-badge none';
+    badge.textContent = '';
+    return;
+  }
+  if(isEarlySleep(val)){
+    badge.className = 'early-badge early';
+    badge.textContent = '⭐ 达标！';
+  } else {
+    badge.className = 'early-badge late';
+    const parts = val.split(':');
+    const h = parseInt(parts[0]);
+    if(h < 6){
+      badge.textContent = '✗ 未达标 · 凌晨'+h+'点睡';
+    } else {
+      badge.textContent = '✗ 未达标 · 超23:30';
+    }
+  }
+}
+
+// ===== Done Items =====
+let doneItemId = 0;
+function addDoneItem(text,note){
+  const id = 'done_'+(++doneItemId);
+  const c = document.getElementById('doneContainer');
+  const div = document.createElement('div');
+  div.className = 'done-item';
+  div.dataset.id = id;
+  div.innerHTML =
+    '<div class="done-item-row">'+
+      '<input type="text" class="done-input" placeholder="做了一件事" value="'+escHtml(text||'')+'">'+
+      '<button class="remove-btn">×</button>'+
+    '</div>'+
+    '<div class="done-note-row">'+
+      '<input type="text" class="done-note-input" placeholder="想法/备注（可选）" value="'+escHtml(note||'')+'">'+
+      '<button class="photo-btn" data-id="'+id+'" title="添加照片">📷</button>'+
+    '</div>'+
+    '<div class="done-photo-preview" data-id="'+id+'"></div>'+
+    '<input type="file" class="done-photo-file" data-id="'+id+'" accept="image/*" style="display:none">';
+  c.appendChild(div);
+
+  // Remove
+  div.querySelector('.remove-btn').onclick = function(){
+    delete currentPhotos[id];
+    div.remove();
+  };
+
+  // Photo
+  const photoBtn = div.querySelector('.photo-btn');
+  const photoFile = div.querySelector('.done-photo-file');
+  const photoPreview = div.querySelector('.done-photo-preview');
+
+  photoBtn.onclick = function(){
+    photoFile.click();
+  };
+  photoFile.onchange = function(){
+    const file = this.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      // Resize to small thumbnail for storage
+      resizeImage(e.target.result, 200, function(smallBase64){
+        currentPhotos[id] = smallBase64;
+        photoPreview.innerHTML = '<img src="'+smallBase64+'" class="done-photo-thumb"><div class="photo-note">照片仅在本次卡片中显示</div>';
+        photoBtn.classList.add('has-photo');
+        photoBtn.textContent = '✓';
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  if(!text) div.querySelector('.done-input').focus();
+}
+
+function resizeImage(dataUrl, maxSize, callback){
+  const img = new Image();
+  img.onload = function(){
+    const canvas = document.createElement('canvas');
+    let w = img.width, h = img.height;
+    if(w>maxSize||h>maxSize){
+      const ratio = Math.min(maxSize/w, maxSize/h);
+      w = Math.round(w*ratio); h = Math.round(h*ratio);
+    }
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img,0,0,w,h);
+    callback(canvas.toDataURL('image/jpeg',0.7));
+  };
+  img.src = dataUrl;
+}
+
+// ===== Time =====
+function adjustTime(cat,delta){
+  timeData[cat] = Math.max(0,Math.min(24,timeData[cat]+delta*0.5));
+  document.getElementById('time_'+cat).textContent = timeData[cat]+'h';
+}
+
+// ===== Mood =====
+function selectMood(emoji){
+  selectedMood = emoji;
+  document.querySelectorAll('.mood-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mood===emoji);
+  });
+  document.getElementById('moodText').textContent = MOODS[emoji]||'';
+}
+function clearMood(){
+  selectedMood = null;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('moodText').textContent = '';
+}
+
+// ===== Date Navigation =====
+function navigateDate(delta){
+  autoSave();
+  currentDate.setDate(currentDate.getDate()+delta);
+  document.getElementById('dateText').textContent = formatDate(currentDate);
+  updateTodayHint();
+  loadDayEntry();
+}
+function updateTodayHint(){
+  const today = new Date();
+  document.getElementById('todayHint').textContent = dateKey(currentDate)===dateKey(today)?'今天':'';
+}
+
+// ===== Save / Load Day =====
+function collectDayData(){
+  const items = [];
+  document.querySelectorAll('.done-item').forEach(div=>{
+    const text = div.querySelector('.done-input').value.trim();
+    const note = div.querySelector('.done-note-input').value.trim();
+    const id = div.dataset.id;
+    if(text) items.push({text,note,id});
+  });
+  return {
+    done:items,
+    anchorLife:document.getElementById('anchorLifeInput').value.trim(),
+    anchorWork:document.getElementById('anchorWorkInput').value.trim(),
+    bedtime:document.getElementById('bedtimeInput').value,
+    mood:selectedMood, moodText:selectedMood?MOODS[selectedMood]:null,
+    moodDesc:document.getElementById('moodDesc').value.trim(),
+    time:{...timeData}
+  };
+}
+function autoSave(){
+  const data = loadData();
+  const key = dateKey(currentDate);
+  const entry = collectDayData();
+  const hasContent = entry.done.length||entry.anchorLife||entry.anchorWork||entry.bedtime||entry.mood||entry.moodDesc||Object.values(entry.time).some(v=>v>0);
+  if(hasContent){
+    // Save done items without id (id is runtime only)
+    entry.done = entry.done.map(d=>({text:d.text,note:d.note}));
+    data.days[key] = entry;
+    saveAll(data);
+  }
+}
+function loadDayEntry(){
+  const data = loadData();
+  const key = dateKey(currentDate);
+  const entry = data.days[key];
+  document.getElementById('doneContainer').innerHTML = '';
+  currentPhotos = {};
+  if(entry){
+    // done items now have text + note
+    const items = entry.done||[];
+    if(items.length) items.forEach(d=>addDoneItem(d.text||d,d.note||'')); else addDoneItem();
+    // Backward compat: old single anchor → anchorWork
+    document.getElementById('anchorLifeInput').value = entry.anchorLife||'';
+    document.getElementById('anchorWorkInput').value = entry.anchorWork||entry.anchor||'';
+    document.getElementById('bedtimeInput').value = entry.bedtime||'';
+    timeData = entry.time?{...entry.time}:{sleep:0,phone:0,productive:0,life:0};
+    if(entry.mood) selectMood(entry.mood); else clearMood();
+    document.getElementById('moodDesc').value = entry.moodDesc||'';
+  } else {
+    addDoneItem();
+    document.getElementById('anchorLifeInput').value = '';
+    document.getElementById('anchorWorkInput').value = '';
+    document.getElementById('bedtimeInput').value = '';
+    timeData = {sleep:0,phone:0,productive:0,life:0};
+    clearMood();
+    document.getElementById('moodDesc').value = '';
+  }
+  TIME_CATS.forEach(c=>{ document.getElementById('time_'+c).textContent = timeData[c]+'h'; });
+  updateEarlyBadge();
+}
+
+// ===== Generate Daily Card =====
+function generateDailyCard(){
+  autoSave();
+  const entry = collectDayData();
+  if(!entry.done.length&&!entry.anchorLife&&!entry.anchorWork&&!entry.mood&&!entry.moodDesc&&!entry.bedtime){
+    alert('写点什么再生成吧');
+    return;
+  }
+  const m = currentDate.getMonth()+1, d = currentDate.getDate(), w = WEEKDAYS[currentDate.getDay()];
+
+  // Date + Bedtime
+  let bedtimeHtml = '';
+  if(entry.bedtime){
+    const bt = formatBedtime(entry.bedtime);
+    const cls = isEarlySleep(entry.bedtime)?'early':'late';
+    const bh = parseInt(entry.bedtime.split(':')[0]);
+    const label = isEarlySleep(entry.bedtime)?'⭐ 达标':'✗ 未达标 · '+bt;
+    bedtimeHtml = '<span class="card-bedtime-badge '+cls+'">'+label+'</span>';
+  }
+  let dateHtml = '<div class="card-date-row"><div class="card-date-main">'+m+'·'+d+'</div>'+bedtimeHtml+'</div><div class="card-weekday">'+w+'</div>';
+
+  // Done items with notes
+  let doneHtml = entry.done.map(item=>{
+    let h = '<div class="card-done-item"><div class="card-done-text"><span class="card-dot"></span>'+escHtml(item.text)+'</div></div>';
+    if(item.note) h = '<div class="card-done-item"><div class="card-done-text"><span class="card-dot"></span>'+escHtml(item.text)+'</div><div class="card-done-note">'+escHtml(item.note)+'</div></div>';
+    return h;
+  }).join('');
+
+  // Photos
+  let photoHtml = '';
+  const photoIds = entry.done.filter(d=>currentPhotos[d.id]);
+  if(photoIds.length){
+    photoHtml = '<div class="card-divider"></div><div class="card-photo-section"><div class="card-section-title">📷</div><div class="card-photo-grid">'+
+      photoIds.map(d=>'<img src="'+currentPhotos[d.id]+'" class="card-photo-thumb">').join('')+'</div></div>';
+  }
+
+  let anchorLifeHtml = entry.anchorLife?'<div class="card-anchor card-anchor-life">🌱 '+escHtml(entry.anchorLife)+'</div>':'';
+  let anchorWorkHtml = entry.anchorWork?'<div class="card-anchor card-anchor-work">→ '+escHtml(entry.anchorWork)+'</div>':'';
+  let anchorHtml = (anchorLifeHtml||anchorWorkHtml)?'<div class="card-anchor-section"><div class="card-section-title">→ 明天</div>'+anchorLifeHtml+anchorWorkHtml+'</div>':'';
+  let timeHtml = '';
+  const hasTime = Object.values(entry.time).some(v=>v>0);
+  if(hasTime){
+    const mx = Math.max(...Object.values(entry.time),1);
+    timeHtml = '<div class="card-divider"></div><div class="card-time-section">'+
+      TIME_CATS.filter(c=>entry.time[c]>0).map(c=>
+        '<div class="card-time-row"><span class="card-time-label">'+TIME_LABELS[c]+'</span><div class="card-time-bar"><div class="card-time-fill" style="width:'+(entry.time[c]/mx*100)+'%"></div></div><span class="card-time-val">'+entry.time[c]+'h</span></div>'
+      ).join('')+'</div>';
+  }
+  let moodDescHtml = entry.moodDesc?'<div class="card-mood-desc">'+escHtml(entry.moodDesc).replace(/\n/g,'<br>')+'</div>':'';
+  let moodHtml = entry.mood?'<div class="card-mood"><span class="card-mood-emoji">'+entry.mood+'</span><span class="card-mood-text">'+entry.moodText+'</span></div>'+moodDescHtml:'';
+
+  document.getElementById('cardContent').innerHTML =
+    '<div class="card-brand">时间主权</div>'+
+    dateHtml+
+    '<div class="card-divider"></div>'+
+    '<div class="card-done-section"><div class="card-section-title">✓ Done</div>'+doneHtml+'</div>'+
+    anchorHtml+timeHtml+photoHtml+moodHtml;
+
+  showView('previewView');
+  document.getElementById('savedTip').textContent = '✓ 已保存';
+  setTimeout(()=>{document.getElementById('savedTip').textContent='';},1500);
+}
+
+// ===== Weekly =====
+function getWeekRange(){
+  const d = new Date(currentDate);
+  const day = d.getDay();
+  const diff = day===0?6:day-1;
+  const monday = new Date(d); monday.setDate(d.getDate()-diff);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  return {start:monday,end:sunday};
+}
+function loadWeekData(){
+  const {start,end} = getWeekRange();
+  const data = loadData();
+  document.getElementById('weekLabel').textContent = (start.getMonth()+1)+'.'+start.getDate()+' — '+(end.getMonth()+1)+'.'+end.getDate();
+
+  let daysRecorded=0, totalDone=0, earlyDays=0;
+  let entriesHtml = '';
+  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    const key = dateKey(d);
+    const e = data.days[key];
+    if(e){
+      daysRecorded++;
+      totalDone += e.done.length;
+      if(e.bedtime&&isEarlySleep(e.bedtime)) earlyDays++;
+      const doneTexts = e.done.map(d=>d.text||d).join('、');
+      const anchorLife = e.anchorLife||'', anchorWork = e.anchorWork||e.anchor||'';
+      const anchorParts = [];
+      if(anchorLife) anchorParts.push('🌱 '+anchorLife);
+      if(anchorWork) anchorParts.push('→ '+anchorWork);
+      entriesHtml += '<div class="week-entry-day"><div class="week-entry-date">'+formatDate(d)+(e.mood?' <span class="week-entry-mood">'+e.mood+'</span>':'')+
+        (e.bedtime?' <span class="week-entry-bedtime">🌙 '+formatBedtime(e.bedtime)+(isEarlySleep(e.bedtime)?' ⭐达标':' ✗未达标')+'</span>':'')+'</div>'+
+        '<div class="week-entry-items">'+(doneTexts?'✓ '+doneTexts:'—')+'</div>'+
+        (anchorParts.length?'<div class="week-entry-anchor">'+anchorParts.join(' &nbsp;|&nbsp; ')+'</div>':'')+
+        (e.moodDesc?'<div class="week-entry-desc" style="font-size:12px;color:var(--text2);font-style:italic;margin-top:2px">'+escHtml(e.moodDesc).substring(0,50)+(e.moodDesc.length>50?'…':'')+'</div>':'')+'</div>';
+    }
+  }
+
+  document.getElementById('weekStats').innerHTML =
+    '<div class="stat-card"><div class="stat-num">'+daysRecorded+'</div><div class="stat-label">天记录</div></div>'+
+    '<div class="stat-card"><div class="stat-num">'+totalDone+'</div><div class="stat-label">件事</div></div>'+
+    '<div class="stat-card"><div class="stat-num">'+earlyDays+'</div><div class="stat-label">早睡⭐</div></div>';
+  document.getElementById('weekEntries').innerHTML = entriesHtml||'<p style="text-align:center;color:var(--text2);padding:16px 0">本周还没有记录</p>';
+
+  const wk = dateKey(start);
+  if(data.weeks&&data.weeks[wk]){
+    document.getElementById('weekHighlights').value = data.weeks[wk].highlights||'';
+    document.getElementById('weekImprove').value = data.weeks[wk].improve||'';
+    document.getElementById('weekAnchor').value = data.weeks[wk].nextAnchor||'';
+  } else {
+    document.getElementById('weekHighlights').value = '';
+    document.getElementById('weekImprove').value = '';
+    document.getElementById('weekAnchor').value = '';
+  }
+}
+function generateWeeklyCard(){
+  const {start,end} = getWeekRange();
+  const data = loadData();
+  const wk = dateKey(start);
+  if(!data.weeks) data.weeks = {};
+  data.weeks[wk] = {
+    highlights:document.getElementById('weekHighlights').value.trim(),
+    improve:document.getElementById('weekImprove').value.trim(),
+    nextAnchor:document.getElementById('weekAnchor').value.trim()
+  };
+  saveAll(data);
+
+  let daysRecorded=0,totalDone=0,earlyDays=0;
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    const e = data.days[dateKey(d)];
+    if(e){daysRecorded++;totalDone+=e.done.length;if(e.bedtime&&isEarlySleep(e.bedtime))earlyDays++;}
+  }
+  const s1=(start.getMonth()+1)+'.'+start.getDate(), s2=(end.getMonth()+1)+'.'+end.getDate();
+  const hi=data.weeks[wk].highlights, imp=data.weeks[wk].improve, na=data.weeks[wk].nextAnchor;
+
+  let html = '<div class="card-brand">时间主权 · 周复盘</div>'+
+    '<div class="card-date-section"><div class="card-date-main">'+s1+' — '+s2+'</div></div>'+
+    '<div class="card-divider"></div>'+
+    '<div class="card-stats"><div class="card-stat"><span class="num">'+daysRecorded+'</span><span class="lbl">天记录</span></div><div class="card-stat"><span class="num">'+totalDone+'</span><span class="lbl">件事</span></div><div class="card-stat"><span class="num">'+earlyDays+'</span><span class="lbl">早睡⭐</span></div></div>';
+  if(hi) html+='<div class="card-section-title">✦ 高光</div><div class="card-week-highlights"><div class="card-text-block">'+escHtml(hi).replace(/\n/g,'<br>')+'</div></div>';
+  if(imp) html+='<div class="card-section-title">↻ 改善</div><div class="card-week-improve"><div class="card-text-block">'+escHtml(imp).replace(/\n/g,'<br>')+'</div></div>';
+  if(na) html+='<div class="card-section-title">→ 下周</div><div class="card-anchor">'+escHtml(na)+'</div>';
+
+  document.getElementById('weeklyCardContent').innerHTML = html;
+  showView('weeklyPreviewView');
+}
+
+// ===== Export / Import =====
+function exportData(){
+  const data = loadData();
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const today = new Date().toISOString().split('T')[0];
+  a.download = '时间主权_'+today+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(){
+  document.getElementById('importFile').click();
+}
+function handleImport(file){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const imported = JSON.parse(e.target.result);
+      if(!imported.days){ throw new Error('格式不对'); }
+      const current = loadData();
+      // Merge: imported data overwrites same dates, keeps existing ones
+      const merged = {days:{...current.days,...imported.days},weeks:{...current.weeks,...imported.weeks}};
+      saveAll(merged);
+      alert('导入成功！合并了 '+Object.keys(imported.days).length+' 天的记录');
+      loadDayEntry();
+      // If on weekly view, refresh
+      if(document.getElementById('weeklyView').style.display!=='none') loadWeekData();
+    } catch(err){
+      alert('导入失败：文件格式不正确');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ===== View Management =====
+function showView(id){
+  ['dailyView','previewView','weeklyView','weeklyPreviewView'].forEach(v=>{
+    document.getElementById(v).style.display = v===id?'block':'none';
+  });
+  window.scrollTo(0,0);
+}
+function switchTab(tab){
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  if(tab==='daily'){ showView('dailyView'); }
+  else { showView('weeklyView'); loadWeekData(); }
+}
+
+// ===== Init =====
+function init(){
+  document.getElementById('dateText').textContent = formatDate(currentDate);
+  updateTodayHint();
+
+  document.getElementById('prevDay').onclick = ()=>navigateDate(-1);
+  document.getElementById('nextDay').onclick = ()=>navigateDate(1);
+  document.getElementById('addDoneBtn').onclick = ()=>addDoneItem();
+
+  // Bedtime live update
+  document.getElementById('bedtimeInput').onchange = updateEarlyBadge;
+  document.getElementById('bedtimeInput').oninput = updateEarlyBadge;
+
+  document.getElementById('generateBtn').onclick = generateDailyCard;
+  document.getElementById('backBtn').onclick = ()=>{ showView('dailyView'); };
+  document.getElementById('exportBtn').onclick = exportData;
+  document.getElementById('importBtn').onclick = importData;
+  document.getElementById('importFile').onchange = function(){ if(this.files[0]) handleImport(this.files[0]); this.value=''; };
+  document.getElementById('generateWeeklyBtn').onclick = generateWeeklyCard;
+  document.getElementById('weeklyBackBtn').onclick = ()=>{ showView('weeklyView'); };
+
+  document.querySelectorAll('.nav-tab').forEach(t=>{
+    t.onclick = ()=>switchTab(t.dataset.tab);
+  });
+
+  document.getElementById('timeToggle').onclick = ()=>{
+    const c = document.getElementById('timeContainer');
+    const isOpen = c.classList.contains('expanded');
+    c.classList.toggle('expanded',!isOpen);
+    c.classList.toggle('collapsed',isOpen);
+    document.querySelector('#timeToggle .arrow').textContent = isOpen?'▾':'▴';
+  };
+
+  document.querySelectorAll('.time-btn').forEach(b=>{
+    b.onclick = ()=>adjustTime(b.dataset.cat,parseInt(b.dataset.dir));
+  });
+
+  document.querySelectorAll('.mood-btn').forEach(b=>{
+    b.onclick = ()=>selectMood(b.dataset.mood);
+  });
+
+  loadDayEntry();
+  if(!document.querySelector('.done-input')) addDoneItem();
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
